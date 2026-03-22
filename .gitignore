@@ -1,0 +1,16 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.code-workspace
+*.suo
+*.user
+
+# Logs
+*.log
+
+# Node (caso use futuramente)
+node_modules/

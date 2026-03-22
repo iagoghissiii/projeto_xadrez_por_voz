@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xadrez por Voz — Plataforma de Acessibilidade</title>
+
+    <!-- Fontes & Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Chessboard CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glass" aria-hidden="true"></div>
+
+    <!-- ===== CABEÇALHO ===== -->
+    <header class="glass-header" role="banner">
+        <button class="icon-btn hamburger-btn"
+                onclick="toggleSidebar()"
+                aria-label="Abrir configurações"
+                aria-expanded="false"
+                aria-controls="sidebarConfig"
+                id="btnHamburger">
+            <i class="ph ph-list" aria-hidden="true"></i>
+        </button>
+        <div class="logo">
+            <h1>♔ Xadrez por Voz</h1>
+            <span>Plataforma de Acessibilidade</span>
+        </div>
+        <!-- Botão de ajuda de comandos de voz -->
+        <button class="icon-btn header-right-btn"
+                onclick="toggleAjuda()"
+                aria-label="Ver comandos de voz disponíveis"
+                title="Comandos de Voz">
+            <i class="ph ph-question" aria-hidden="true"></i>
+        </button>
+    </header>
+
+    <!-- ===== SIDEBAR ===== -->
+    <nav id="sidebarConfig"
+         class="sidebar"
+         role="navigation"
+         aria-label="Configurações do jogo"
+         aria-hidden="true">
+        <button class="icon-btn close-btn"
+                onclick="toggleSidebar()"
+                aria-label="Fechar configurações">
+            <i class="ph ph-x" aria-hidden="true"></i>
+        </button>
+
+        <h2><i class="ph ph-gear" aria-hidden="true"></i> Configurações</h2>
+
+        <div class="config-content">
+            <div class="input-group">
+                <label class="instrucao-menu" for="selectModo">
+                    <i class="ph ph-users" aria-hidden="true"></i> Modo de Jogo:
+                </label>
+                <select id="selectModo" class="form-control" onchange="atualizarOpcoesDificuldade()">
+                    <option value="PvP">Humano vs Humano</option>
+                    <option value="PvE">Humano vs Computador</option>
+                </select>
+            </div>
+
+            <div id="divDificuldade" class="input-group" style="display: none;">
+                <label class="instrucao-menu" for="selectDificuldade">
+                    <i class="ph ph-cpu" aria-hidden="true"></i> Nível da IA:
+                </label>
+                <select id="selectDificuldade" class="form-control">
+                    <option value="facil">Fácil</option>
+                    <option value="medio">Médio</option>
+                    <option value="dificil">Difícil</option>
+                </select>
+            </div>
+
+            <button id="btnIniciar" class="btn-primary" onclick="iniciarPartida()">
+                <i class="ph ph-play" aria-hidden="true"></i> Iniciar Partida
+            </button>
+
+            <hr class="divisor">
+
+            <button id="btnTema" class="btn-secondary" onclick="alternarTema()">
+                <i class="ph ph-moon" aria-hidden="true"></i> Modo Escuro
+            </button>
+        </div>
+    </nav>
+
+    <!-- Overlay escuro ao abrir sidebar -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()" aria-hidden="true"></div>
+
+    <!-- ===== MODAL PROMOÇÃO ===== -->
+    <div id="modalPromocao"
+         class="overlay"
+         style="display: none; z-index: 2000;"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="tituloPromocao">
+        <div class="glass-card promo-modal text-center">
+            <h2 id="tituloPromocao">♛ Promoção do Peão</h2>
+            <p class="instrucao-menu mb-4">Escolha a peça de destino:</p>
+            <div class="promo-grid" role="group" aria-label="Escolha a peça">
+                <button class="btn-primary promo-btn" onclick="efetuarPromocao('q')" aria-label="Promover para Dama">♕ Dama</button>
+                <button class="btn-primary promo-btn" onclick="efetuarPromocao('r')" aria-label="Promover para Torre">♖ Torre</button>
+                <button class="btn-primary promo-btn" onclick="efetuarPromocao('b')" aria-label="Promover para Bispo">♗ Bispo</button>
+                <button class="btn-primary promo-btn" onclick="efetuarPromocao('n')" aria-label="Promover para Cavalo">♘ Cavalo</button>
+            </div>
+            <button class="btn-danger mt-4" onclick="cancelarPromocao()">
+                <i class="ph ph-x-circle" aria-hidden="true"></i> Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL AJUDA / COMANDOS DE VOZ ===== -->
+    <div id="modalAjuda"
+         class="overlay"
+         style="display: none; z-index: 2000;"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="tituloAjuda">
+        <div class="glass-card ajuda-modal">
+            <button class="icon-btn revisao-close" onclick="toggleAjuda()" aria-label="Fechar ajuda">
+                <i class="ph ph-x" aria-hidden="true"></i>
+            </button>
+            <h2 id="tituloAjuda" class="revisao-titulo">
+                <i class="ph ph-microphone" aria-hidden="true"></i> Comandos de Voz
+            </h2>
+
+            <p class="ajuda-intro">
+                Clique em <strong>Falar Jogada</strong> e fale claramente.
+                Veja abaixo os formatos aceitos:
+            </p>
+
+            <div class="ajuda-secoes">
+                <div class="ajuda-secao">
+                    <h3 class="ajuda-subtitulo">
+                        <i class="ph ph-arrows-out-cardinal" aria-hidden="true"></i> Mover Peças
+                    </h3>
+                    <ul class="ajuda-lista">
+                        <li><code>"e dois e quatro"</code> — peão de e2 para e4</li>
+                        <li><code>"cavalo f três"</code> — cavalo para f3</li>
+                        <li><code>"bispo c quatro"</code> — bispo para c4</li>
+                        <li><code>"torre a um"</code> — torre para a1</li>
+                        <li><code>"dama d um"</code> — dama para d1</li>
+                        <li><code>"rei e um"</code> — rei para e1</li>
+                    </ul>
+                </div>
+
+                <div class="ajuda-secao">
+                    <h3 class="ajuda-subtitulo">
+                        <i class="ph ph-sword" aria-hidden="true"></i> Capturas
+                    </h3>
+                    <ul class="ajuda-lista">
+                        <li><code>"peão toma c cinco"</code></li>
+                        <li><code>"cavalo come e cinco"</code></li>
+                        <li><code>"dama captura h sete"</code></li>
+                        <li><code>"mata d quatro"</code></li>
+                    </ul>
+                </div>
+
+                <div class="ajuda-secao">
+                    <h3 class="ajuda-subtitulo">
+                        <i class="ph ph-castle-turret" aria-hidden="true"></i> Jogadas Especiais
+                    </h3>
+                    <ul class="ajuda-lista">
+                        <li><code>"roque menor"</code> / <code>"roque curto"</code></li>
+                        <li><code>"roque maior"</code> / <code>"roque longo"</code></li>
+                    </ul>
+                </div>
+
+                <div class="ajuda-secao">
+                    <h3 class="ajuda-subtitulo">
+                        <i class="ph ph-info" aria-hidden="true"></i> Consultas por Voz
+                    </h3>
+                    <ul class="ajuda-lista">
+                        <li><code>"status"</code> — ouve o estado do jogo</li>
+                        <li><code>"quem joga"</code> — de quem é a vez</li>
+                        <li><code>"situação"</code> — resumo da partida</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ajuda-dica">
+                <i class="ph ph-lightbulb" aria-hidden="true"></i>
+                <strong>Dica:</strong> Fale devagar e com clareza. Se o lance falhar, tente
+                dizer a <em>origem e o destino</em> juntos:
+                <code>"e dois e quatro"</code>.
+            </div>
+
+            <button class="btn-primary mt-4" onclick="toggleAjuda()">
+                <i class="ph ph-check" aria-hidden="true"></i> Entendi
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== REGIÃO LIVE (leitores de tela) ===== -->
+    <div id="liveRegion"
+         class="visually-hidden"
+         aria-live="assertive"
+         aria-atomic="true"
+         role="status"></div>
+
+    <!-- ===== CONTEÚDO PRINCIPAL ===== -->
+    <main id="conteudo-principal" class="container" role="main">
+
+        <!-- PAINEL (Esquerda) -->
+        <section class="control-section glass-card" aria-label="Painel de controle">
+            <div class="panel-header">
+                <h2><i class="ph ph-game-controller" aria-hidden="true"></i> Painel de Controle</h2>
+            </div>
+
+            <div id="statusJogo"
+                 class="status-box"
+                 role="status"
+                 aria-live="polite">
+                Configure e inicie a partida.
+            </div>
+
+            <button id="btnGravar"
+                    class="btn-voice"
+                    disabled
+                    aria-label="Falar jogada via microfone"
+                    aria-pressed="false">
+                <i class="ph ph-microphone" aria-hidden="true"></i> Falar Jogada
+            </button>
+
+            <!-- Aviso quando o navegador não suporta voz -->
+            <div id="avisoMicrofone" class="aviso-info" style="display:none;" role="alert" aria-live="assertive">
+                <i class="ph ph-warning" aria-hidden="true"></i>
+                Reconhecimento de voz <strong>não disponível</strong> neste navegador.
+                Use <strong>Chrome</strong> ou <strong>Edge</strong> para jogar por voz.
+            </div>
+
+            <div class="voice-feedback">
+                <div class="chat-bubble">
+                    <p class="chat-label">
+                        <i class="ph ph-chat-dots" aria-hidden="true"></i> Transcrição
+                    </p>
+                    <p id="resultado"
+                       class="chat-text"
+                       aria-live="polite"
+                       aria-label="Resultado do reconhecimento de voz">
+                        <em>Aguardando início...</em>
+                    </p>
+                </div>
+            </div>
+
+            <div class="historico-box mt-4">
+                <p class="chat-label text-center" style="margin-bottom:10px;">
+                    <i class="ph ph-list-numbers" aria-hidden="true"></i> Histórico de Lances
+                </p>
+                <div id="historicoLances"
+                     class="historico-content"
+                     role="log"
+                     aria-live="polite"
+                     aria-label="Histórico de lances realizados">
+                    <p class="historico-vazio"><em>Nenhuma jogada ainda.</em></p>
+                </div>
+            </div>
+
+            <button id="btnEncerrar"
+                    class="btn-danger mt-4"
+                    onclick="encerrarPartida()"
+                    style="display: none;"
+                    aria-label="Encerrar partida atual">
+                <i class="ph ph-stop" aria-hidden="true"></i> Encerrar Partida
+            </button>
+        </section>
+
+        <!-- TABULEIRO (Direita) -->
+        <section class="board-section glass-card" aria-label="Tabuleiro de xadrez">
+            <div id="meuTabuleiro"
+                 class="chessboard-wrapper"
+                 role="img"
+                 aria-label="Tabuleiro de xadrez interativo"></div>
+        </section>
+    </main>
+
+    <!-- ===== MODAL REVISÃO PÓS-JOGO ===== -->
+    <div id="modalRevisao"
+         class="overlay"
+         style="display: none; z-index: 2000;"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="tituloRevisao">
+        <div class="glass-card revisao-modal">
+            <button class="icon-btn revisao-close" onclick="fecharRevisao()" aria-label="Fechar revisão">
+                <i class="ph ph-x" aria-hidden="true"></i>
+            </button>
+            <h2 id="tituloRevisao" class="revisao-titulo">
+                <i class="ph ph-chart-bar" aria-hidden="true"></i> Revisão da Partida
+            </h2>
+
+            <div class="revisao-resumo">
+                <div class="resumo-jogador">
+                    <span class="resumo-label">♔ Brancas</span>
+                    <div class="barra-precisao-container"
+                         role="progressbar"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                         aria-label="Precisão das brancas">
+                        <div id="barraBrancas" class="barra-precisao" style="width:0%">0%</div>
+                    </div>
+                </div>
+                <div class="resumo-jogador">
+                    <span class="resumo-label">♚ Pretas</span>
+                    <div class="barra-precisao-container"
+                         role="progressbar"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                         aria-label="Precisão das pretas">
+                        <div id="barraPretas" class="barra-precisao barra-pretas" style="width:0%">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="revisaoProgresso" class="revisao-progresso" style="display:none;" aria-live="polite">
+                <i class="ph ph-spinner" aria-hidden="true"></i>
+                Analisando lances... <span id="progressoTexto">0/0</span>
+            </div>
+
+            <div id="revisaoLances" class="revisao-lances" role="list" aria-label="Lances analisados"></div>
+
+            <button class="btn-primary mt-4" onclick="fecharRevisao()">
+                <i class="ph ph-check" aria-hidden="true"></i> Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
