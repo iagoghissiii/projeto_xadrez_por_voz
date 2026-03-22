@@ -45,4 +45,4 @@ Acesse direto pelo navegador — não requer instalação.
 
 ## Autores
 
-Desenvolvido por **Iago Ghissi** — Projeto Integrador
+Desenvolvido por **Iago Ghissi**
